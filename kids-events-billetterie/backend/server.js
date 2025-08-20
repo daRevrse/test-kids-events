@@ -506,9 +506,14 @@ app.post("/api/webhook/mobile-money", (req, res) => {
 // Initialisation
 initDatabase();
 
-app.listen(PORT, () => {
-  console.log(`🚀 Serveur démarré sur http://localhost:${PORT}`);
-  console.log(`📊 API disponible sur http://localhost:${PORT}/api`);
+// app.listen(PORT, () => {
+//   console.log(`🚀 Serveur démarré sur http://localhost:${PORT}`);
+//   console.log(`📊 API disponible sur http://localhost:${PORT}/api`);
+// });
+
+app.listen(() => {
+  console.log(`🚀 Serveur demarré`);
+  console.log(`📊 API disponible sur /api`);
 });
 
 module.exports = app;

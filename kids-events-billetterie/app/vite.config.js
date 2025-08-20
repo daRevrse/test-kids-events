@@ -14,6 +14,7 @@ export default defineConfig({
       },
     },
   },
+  root: ".",
   build: {
     outDir: "dist",
     sourcemap: true,
@@ -24,6 +25,7 @@ export default defineConfig({
           api: ["axios"],
         },
       },
+      input: "./index.html",
     },
   },
   define: {

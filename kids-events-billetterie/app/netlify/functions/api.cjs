@@ -18,7 +18,7 @@ app.use(express.json());
 // Database path - différent selon l'environnement
 const getDatabasePath = () => {
   // En production Netlify, utilise /tmp/
-  if (process.env.NETLIFY && process.env.NODE_ENV === "production") {
+  if (process.env.NETLIFY && process.env.PROD) {
     return "/tmp/tickets.db";
   }
 

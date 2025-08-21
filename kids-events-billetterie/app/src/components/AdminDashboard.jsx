@@ -14,7 +14,7 @@ import {
 
 import { adminService, ticketService } from "../services/api";
 
-const AdminDashboard = ({ onBack, isOnline, apiWorking }) => {
+const AdminDashboard = ({ onBack, isOnline = true, apiWorking = true }) => {
   const [stats, setStats] = useState({
     totalTickets: { count: 0 },
     pendingTickets: { count: 0 },
@@ -36,9 +36,9 @@ const AdminDashboard = ({ onBack, isOnline, apiWorking }) => {
     try {
       if (isOnline && apiWorking) {
         const data = await adminService.getStats();
-        console.log("API Stats data:", data); // Debug
+        console.log("API Stats data:", data);
 
-        // S'assurer que les données sont des tableaux
+        // Vérifier et normaliser la structure des données
         setStats({
           totalTickets: data.totalTickets || { count: 0 },
           pendingTickets: data.pendingTickets || { count: 0 },
@@ -214,7 +214,7 @@ const AdminDashboard = ({ onBack, isOnline, apiWorking }) => {
 
   useEffect(() => {
     loadStats();
-  }, []);
+  }, [isOnline, apiWorking]);
 
   if (loading) {
     return (

@@ -490,6 +490,8 @@ app.post("/api/tickets/verify", (req, res) => {
   });
 });
 
+// Partie corrigée de api.cjs - Route dashboard admin
+
 // 6. Dashboard admin - statistiques
 app.get("/api/admin/stats", (req, res) => {
   if (!db) {
@@ -502,13 +504,14 @@ app.get("/api/admin/stats", (req, res) => {
     pendingTickets:
       "SELECT COUNT(*) as count FROM tickets WHERE statut = 'pending'",
     totalRevenue:
-      "SELECT SUM(montant) as total FROM transactions WHERE statut = 'completed'",
+      "SELECT COALESCE(SUM(montant), 0) as total FROM transactions WHERE statut = 'completed'",
     ticketsPending: `
       SELECT t.*, e.nom as event_nom 
       FROM tickets t 
       JOIN events e ON t.event_id = e.id 
       WHERE t.statut = 'pending' 
       ORDER BY t.date_creation DESC
+      LIMIT 20
     `,
     ticketsRecent: `
       SELECT t.*, e.nom as event_nom 
@@ -524,18 +527,49 @@ app.get("/api/admin/stats", (req, res) => {
   let completed = 0;
   const total = Object.keys(queries).length;
 
+  const handleQueryResult = (key, err, rows) => {
+    if (err) {
+      console.error(`Error in query ${key}:`, err);
+      results[key] =
+        key.includes("Tickets") &&
+        key !== "totalTickets" &&
+        key !== "pendingTickets"
+          ? []
+          : { count: 0, total: 0 };
+    } else {
+      if (key === "ticketsPending" || key === "ticketsRecent") {
+        // Pour les listes de tickets, retourner directement le tableau
+        results[key] = Array.isArray(rows) ? rows : [];
+      } else {
+        // Pour les comptages et totaux, retourner l'objet avec les valeurs
+        const result = rows[0] || {};
+        results[key] = {
+          count: result.count || 0,
+          total: result.total || 0,
+        };
+      }
+    }
+
+    completed++;
+    if (completed === total) {
+      // Structure finale cohérente
+      const response = {
+        totalTickets: results.totalTickets,
+        pendingTickets: results.pendingTickets,
+        totalRevenue: results.totalRevenue,
+        ticketsPending: results.ticketsPending,
+        ticketsRecent: results.ticketsRecent,
+      };
+
+      console.log("Stats response:", JSON.stringify(response, null, 2));
+      res.json(response);
+    }
+  };
+
+  // Exécuter toutes les requêtes
   Object.entries(queries).forEach(([key, query]) => {
     db.all(query, (err, rows) => {
-      if (err) {
-        results[key] = { error: err.message };
-      } else {
-        results[key] = key.includes("Tickets") ? rows : rows[0] || {};
-      }
-
-      completed++;
-      if (completed === total) {
-        res.json(results);
-      }
+      handleQueryResult(key, err, rows);
     });
   });
 });

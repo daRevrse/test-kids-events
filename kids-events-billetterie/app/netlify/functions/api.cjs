@@ -16,24 +16,25 @@ app.use(cors());
 app.use(express.json());
 
 // Database path - différent selon l'environnement
-const getDatabasePath = () => {
-  // En production Netlify, utilise /tmp/
-  if (process.env.NETLIFY && process.env.PROD) {
-    return "/tmp/tickets.db";
-  }
+// const getDatabasePath = () => {
+//   // En production Netlify, utilise /tmp/
+//   if (process.env.NETLIFY && process.env.PROD) {
+//     return "/tmp/tickets.db";
+//   }
 
-  // En développement local
-  const dbDir = path.join(process.cwd(), "data");
+//   // En développement local
+//   const dbDir = path.join(process.cwd(), "data");
 
-  // Crée le dossier data s'il n'existe pas
-  if (!fs.existsSync(dbDir)) {
-    fs.mkdirSync(dbDir, { recursive: true });
-  }
+//   // Crée le dossier data s'il n'existe pas
+//   if (!fs.existsSync(dbDir)) {
+//     fs.mkdirSync(dbDir, { recursive: true });
+//   }
 
-  return path.join(dbDir, "tickets.db");
-};
+//   return path.join(dbDir, "tickets.db");
+// };
 
-const dbPath = getDatabasePath();
+// const dbPath = getDatabasePath();
+const dbPath = "/tmp/tickets.db";
 let db;
 
 console.log("Database path:", dbPath);

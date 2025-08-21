@@ -9,6 +9,7 @@
 # Configuration des fonctions
 [functions]
   node_bundler = "nft"
+  timeout = 30
 
 # Redirections pour l'API
 [[redirects]]

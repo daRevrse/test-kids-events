@@ -30,6 +30,6 @@ export default defineConfig({
   },
   define: {
     // Variables d'environnement pour différencier dev/prod
-    __DEV__: JSON.stringify(process.env.NODE_ENV === "production"),
+    __PROD__: JSON.stringify(process.env.NODE_ENV === "production"),
   },
 });

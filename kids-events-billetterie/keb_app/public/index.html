@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kids Events - API Status</title>
+    <style>
+      body {
+        font-family: "Arial", sans-serif;
+        margin: 0;
+        padding: 40px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .container {
+        text-align: center;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 40px;
+        border-radius: 20px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        font-size: 2.5em;
+        margin-bottom: 20px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+      .api-status {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+      }
+      .endpoints {
+        text-align: left;
+        margin: 20px 0;
+      }
+      .endpoint {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 10px 15px;
+        margin: 5px 0;
+        border-radius: 5px;
+        font-family: monospace;
+      }
+      .method {
+        color: #4ade80;
+        font-weight: bold;
+        margin-right: 10px;
+      }
+      .method.post {
+        color: #f59e0b;
+      }
+      .method.put {
+        color: #3b82f6;
+      }
+      button {
+        background: #4ade80;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        margin: 10px;
+        transition: all 0.3s ease;
+      }
+      button:hover {
+        background: #22c55e;
+        transform: translateY(-2px);
+      }
+      #status {
+        margin-top: 20px;
+        padding: 15px;
+        border-radius: 8px;
+        display: none;
+      }
+      .success {
+        background: rgba(74, 222, 128, 0.2);
+        border: 1px solid #4ade80;
+      }
+      .error {
+        background: rgba(248, 113, 113, 0.2);
+        border: 1px solid #f87171;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🎪 Kids Events API</h1>
+
+      <div class="api-status">
+        <h2>API Status: <span id="api-status">Checking...</span></h2>
+        <button onclick="testAPI()">Test API Connection</button>
+        <div id="status"></div>
+      </div>
+
+      <div class="endpoints">
+        <h3>Available Endpoints:</h3>
+
+        <div class="endpoint">
+          <span class="method">GET</span>/api/events
+          <small>- Récupérer la liste des événements</small>
+        </div>
+
+        <div class="endpoint">
+          <span class="method post">POST</span>/api/validate-promo
+          <small>- Valider un code promo</small>
+        </div>
+
+        <div class="endpoint">
+          <span class="method post">POST</span>/api/tickets
+          <small>- Créer un nouveau ticket</small>
+        </div>
+
+        <div class="endpoint">
+          <span class="method put">PUT</span>/api/tickets/:id/validate
+          <small>- Valider un ticket (Admin)</small>
+        </div>
+
+        <div class="endpoint">
+          <span class="method post">POST</span>/api/tickets/verify
+          <small>- Vérifier un ticket à l'entrée</small>
+        </div>
+
+        <div class="endpoint">
+          <span class="method">GET</span>/api/admin/stats
+          <small>- Statistiques admin</small>
+        </div>
+
+        <div class="endpoint">
+          <span class="method post">GET</span>/api/tickets/:ticketId
+          <small>- Récupérer un ticket</small>
+        </div>
+      </div>
+
+      <p style="margin-top: 40px; opacity: 0.8">
+        🚀 API déployée avec succès sur Netlify Functions
+      </p>
+    </div>
+
+    <script>
+      async function testAPI() {
+        const statusDiv = document.getElementById("status");
+        const apiStatus = document.getElementById("api-status");
+
+        statusDiv.style.display = "block";
+        statusDiv.innerHTML = "Testing API connection...";
+        statusDiv.className = "";
+        apiStatus.innerHTML = "Testing...";
+
+        try {
+          const response = await fetch("/api/events");
+          const data = await response.json();
+
+          if (response.ok) {
+            statusDiv.innerHTML = `✅ API Connection Successful!<br>Found ${data.length} events`;
+            statusDiv.className = "success";
+            apiStatus.innerHTML = "🟢 Online";
+
+            // Créer et ajouter le bouton "Go to app"
+            const goToAppBtn = document.createElement("button");
+            goToAppBtn.textContent = "Go to app";
+            goToAppBtn.onclick = () => {
+              window.location.href =
+                "https://kidseventsticket.netlify.app/admin"; // Remplace cette URL
+            };
+            statusDiv.appendChild(document.createElement("br"));
+            statusDiv.appendChild(goToAppBtn);
+          } else {
+            throw new Error(
+              `HTTP ${response.status}: ${data.error || "Unknown error"}`
+            );
+          }
+        } catch (error) {
+          statusDiv.innerHTML = `❌ API Connection Failed:<br>${error.message}`;
+          statusDiv.className = "error";
+          apiStatus.innerHTML = "🔴 Offline";
+        }
+      }
+
+      // Test API on page load
+      window.addEventListener("load", testAPI);
+    </script>
+  </body>
+</html>

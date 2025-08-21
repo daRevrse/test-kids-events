@@ -10,146 +10,136 @@ import {
   AlertTriangle,
   Wifi,
   WifiOff,
+  Check,
+  X,
 } from "lucide-react";
 
 import { adminService, ticketService } from "../services/api";
 
 const AdminDashboard = ({ onBack, isOnline, apiWorking }) => {
-  const [stats, setStats] = useState({
-    totalTickets: { count: 0 },
-    pendingTickets: { count: 0 },
-    totalRevenue: { total: 0 },
-    ticketsPending: [],
-    ticketsRecent: [],
-  });
+  // États pour les données locales (comme dans l'ancienne version)
+  const [tickets, setTickets] = useState([]);
+  const [transactions, setTransactions] = useState([]);
 
+  // États pour l'interface
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [scannedTicket, setScannedTicket] = useState("");
   const [verificationResult, setVerificationResult] = useState(null);
 
-  // Charger les statistiques
-  const loadStats = async () => {
+  // Charger les données (version hybride)
+  const loadData = async () => {
     setLoading(true);
     setError("");
 
     try {
       if (isOnline && apiWorking) {
-        const data = await adminService.getStats();
-        console.log("API Stats data:", data); // Debug
+        // Essayer de charger depuis l'API
+        try {
+          const apiData = await adminService.getStats();
+          console.log("API Data received:", apiData);
 
-        // S'assurer que les données sont des tableaux
-        setStats({
-          totalTickets: data.totalTickets || { count: 0 },
-          pendingTickets: data.pendingTickets || { count: 0 },
-          totalRevenue: data.totalRevenue || { total: 0 },
-          ticketsPending: Array.isArray(data.ticketsPending)
-            ? data.ticketsPending
-            : [],
-          ticketsRecent: Array.isArray(data.ticketsRecent)
-            ? data.ticketsRecent
-            : [],
-        });
+          // Extraire les tickets depuis les données API
+          const allTickets = [
+            ...(Array.isArray(apiData.ticketsPending)
+              ? apiData.ticketsPending
+              : []),
+            ...(Array.isArray(apiData.ticketsRecent)
+              ? apiData.ticketsRecent
+              : []),
+          ];
+
+          setTickets(allTickets);
+
+          // Pour les transactions, on peut les reconstituer ou utiliser les données locales
+          const localTransactions = JSON.parse(
+            localStorage.getItem("transactions") || "[]"
+          );
+          setTransactions(localTransactions);
+        } catch (apiError) {
+          console.warn("API failed, falling back to local data:", apiError);
+          loadLocalData();
+        }
       } else {
-        // Mode hors-ligne - utiliser les données locales
-        const localTickets = JSON.parse(
-          localStorage.getItem("tickets") || "[]"
-        );
-        const localTransactions = JSON.parse(
-          localStorage.getItem("transactions") || "[]"
-        );
-
-        const confirmedTickets = localTickets.filter(
-          (t) => t.statut === "confirmed"
-        );
-        const pendingTickets = localTickets.filter(
-          (t) => t.statut === "pending"
-        );
-        const completedTransactions = localTransactions.filter(
-          (t) => t.statut === "completed"
-        );
-
-        setStats({
-          totalTickets: { count: confirmedTickets.length },
-          pendingTickets: { count: pendingTickets.length },
-          totalRevenue: {
-            total: completedTransactions.reduce(
-              (sum, t) => sum + (t.montant || 0),
-              0
-            ),
-          },
-          ticketsPending: pendingTickets.slice(-10),
-          ticketsRecent: confirmedTickets.slice(-10).reverse(),
-        });
+        loadLocalData();
       }
     } catch (err) {
-      console.error("Erreur chargement stats:", err);
-      setError("Impossible de charger les statistiques");
-
-      // En cas d'erreur, définir des valeurs par défaut
-      setStats({
-        totalTickets: { count: 0 },
-        pendingTickets: { count: 0 },
-        totalRevenue: { total: 0 },
-        ticketsPending: [],
-        ticketsRecent: [],
-      });
+      console.error("Error loading data:", err);
+      setError("Erreur lors du chargement des données");
+      loadLocalData(); // Fallback vers les données locales
     } finally {
       setLoading(false);
     }
   };
 
-  // Valider un ticket
+  // Charger les données locales
+  const loadLocalData = () => {
+    const localTickets = JSON.parse(localStorage.getItem("tickets") || "[]");
+    const localTransactions = JSON.parse(
+      localStorage.getItem("transactions") || "[]"
+    );
+
+    console.log("Loading local data:", {
+      tickets: localTickets.length,
+      transactions: localTransactions.length,
+    });
+
+    setTickets(localTickets);
+    setTransactions(localTransactions);
+  };
+
+  // Calculer les statistiques (comme dans l'ancienne version)
+  const pendingTickets = tickets.filter((t) => t.statut === "pending");
+  const confirmedTickets = tickets.filter((t) => t.statut === "confirmed");
+  const totalRevenue = transactions
+    .filter((t) => t.statut === "completed")
+    .reduce((sum, t) => sum + (t.montant || 0), 0);
+
+  // Valider un ticket (version améliorée)
   const validateTicket = async (ticketId, action) => {
     try {
       if (isOnline && apiWorking) {
-        await ticketService.validateTicket(ticketId, action);
-      } else {
-        // Mode hors-ligne - mettre à jour localement
-        const localTickets = JSON.parse(
-          localStorage.getItem("tickets") || "[]"
-        );
-        const updatedTickets = localTickets.map((ticket) =>
-          ticket.id === ticketId
-            ? {
-                ...ticket,
-                statut: action === "approve" ? "confirmed" : "rejected",
-                dateValidation: new Date().toISOString(),
-              }
-            : ticket
-        );
-        localStorage.setItem("tickets", JSON.stringify(updatedTickets));
-
-        // Mettre à jour les transactions locales
-        const localTransactions = JSON.parse(
-          localStorage.getItem("transactions") || "[]"
-        );
-        const updatedTransactions = localTransactions.map((transaction) =>
-          transaction.ticketId === ticketId
-            ? {
-                ...transaction,
-                statut: action === "approve" ? "completed" : "failed",
-              }
-            : transaction
-        );
-        localStorage.setItem(
-          "transactions",
-          JSON.stringify(updatedTransactions)
-        );
+        // Essayer l'API d'abord
+        try {
+          await ticketService.validateTicket(ticketId, action);
+        } catch (apiError) {
+          console.warn("API validation failed, updating locally:", apiError);
+        }
       }
 
-      // Recharger les stats
-      await loadStats();
+      // Mettre à jour localement dans tous les cas
+      const updatedTickets = tickets.map((ticket) =>
+        ticket.id === ticketId
+          ? {
+              ...ticket,
+              statut: action === "approve" ? "confirmed" : "rejected",
+              dateValidation: new Date().toISOString(),
+            }
+          : ticket
+      );
+      setTickets(updatedTickets);
+      localStorage.setItem("tickets", JSON.stringify(updatedTickets));
+
+      const updatedTransactions = transactions.map((transaction) =>
+        transaction.ticketId === ticketId
+          ? {
+              ...transaction,
+              statut: action === "approve" ? "completed" : "failed",
+            }
+          : transaction
+      );
+      setTransactions(updatedTransactions);
+      localStorage.setItem("transactions", JSON.stringify(updatedTransactions));
 
       const actionText = action === "approve" ? "approuvé" : "rejeté";
       alert(`✅ Ticket ${actionText} avec succès`);
     } catch (err) {
-      console.error("Erreur validation ticket:", err);
+      console.error("Error validating ticket:", err);
       setError(`Erreur lors de la validation: ${err.message}`);
     }
   };
 
-  // Vérifier un ticket à l'entrée
+  // Vérifier un ticket à l'entrée (version améliorée)
   const verifyTicketForEntry = async () => {
     if (!scannedTicket.trim()) {
       setError("Veuillez entrer un ID ou QR code");
@@ -161,51 +151,55 @@ const AdminDashboard = ({ onBack, isOnline, apiWorking }) => {
 
     try {
       if (isOnline && apiWorking) {
-        const result = await ticketService.verifyTicket({
-          ticketId: scannedTicket,
-          qrCode: scannedTicket,
-        });
-        setVerificationResult(result);
-      } else {
-        // Mode hors-ligne - vérifier localement
-        const localTickets = JSON.parse(
-          localStorage.getItem("tickets") || "[]"
-        );
-        const ticket = localTickets.find(
-          (t) =>
-            t.id === scannedTicket ||
-            t.qrCode === scannedTicket ||
-            t.codeUnique === scannedTicket
-        );
+        // Essayer l'API d'abord
+        try {
+          const result = await ticketService.verifyTicket({
+            ticketId: scannedTicket,
+            qrCode: scannedTicket,
+          });
+          setVerificationResult(result);
+          setScannedTicket("");
+          return;
+        } catch (apiError) {
+          console.warn("API verification failed, checking locally:", apiError);
+        }
+      }
 
-        if (ticket) {
-          if (ticket.statut === "confirmed") {
-            setVerificationResult({
-              valid: true,
-              ticket: {
-                id: ticket.id,
-                nombreBillets: ticket.nombreBillets,
-                prixTotal: ticket.prixTotal,
-                typePaiement: ticket.typePaiement,
-              },
-              message: `Ticket valide - ${ticket.nombreBillets} personne(s) - Accès autorisé`,
-            });
-          } else {
-            setVerificationResult({
-              valid: false,
-              ticket,
-              message: `Ticket non confirmé - Statut: ${ticket.statut}`,
-            });
-          }
+      // Vérification locale
+      const ticket = tickets.find(
+        (t) =>
+          t.id === scannedTicket ||
+          t.qrCode === scannedTicket ||
+          t.codeUnique === scannedTicket
+      );
+
+      if (ticket) {
+        if (ticket.statut === "confirmed") {
+          setVerificationResult({
+            valid: true,
+            ticket: {
+              id: ticket.id,
+              nombreBillets: ticket.nombreBillets,
+              prixTotal: ticket.prixTotal,
+              typePaiement: ticket.typePaiement,
+            },
+            message: `Ticket valide - ${ticket.nombreBillets} personne(s) - Accès autorisé`,
+          });
         } else {
           setVerificationResult({
             valid: false,
-            message: "Ticket introuvable",
+            ticket,
+            message: `Ticket non confirmé - Statut: ${ticket.statut}`,
           });
         }
+      } else {
+        setVerificationResult({
+          valid: false,
+          message: "Ticket introuvable",
+        });
       }
     } catch (err) {
-      console.error("Erreur vérification ticket:", err);
+      console.error("Error verifying ticket:", err);
       setError(`Erreur vérification: ${err.message}`);
     }
 
@@ -213,8 +207,8 @@ const AdminDashboard = ({ onBack, isOnline, apiWorking }) => {
   };
 
   useEffect(() => {
-    loadStats();
-  }, []);
+    loadData();
+  }, [isOnline, apiWorking]);
 
   if (loading) {
     return (
@@ -257,7 +251,7 @@ const AdminDashboard = ({ onBack, isOnline, apiWorking }) => {
               <h1 className="text-2xl font-bold text-gray-900">
                 Admin Dashboard
               </h1>
-              <div className="flex items-center space-x-2 mt-2">
+              <div className="flex items-center space-x-4 mt-2">
                 {isOnline && apiWorking ? (
                   <>
                     <Wifi size={16} className="text-green-600" />
@@ -269,11 +263,14 @@ const AdminDashboard = ({ onBack, isOnline, apiWorking }) => {
                     <span className="text-sm text-orange-600">Hors-ligne</span>
                   </>
                 )}
+                <span className="text-xs text-gray-500">
+                  {tickets.length} tickets • {transactions.length} transactions
+                </span>
               </div>
             </div>
             <div className="flex space-x-2">
               <button
-                onClick={loadStats}
+                onClick={loadData}
                 className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
               >
                 <RefreshCw size={16} />
@@ -295,41 +292,41 @@ const AdminDashboard = ({ onBack, isOnline, apiWorking }) => {
           </div>
         )}
 
-        {/* Statistiques */}
+        {/* Statistiques (style de l'ancienne version) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="flex items-center justify-between">
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <div className="flex items-center">
+              <Users className="text-blue-600 mr-2" size={32} />
               <div>
-                <p className="text-sm text-gray-600">Tickets confirmés</p>
-                <p className="text-3xl font-bold text-blue-600">
-                  {stats.totalTickets?.count || 0}
-                </p>
+                <div className="text-sm text-gray-600">Tickets vendus</div>
+                <div className="text-3xl font-bold text-blue-600">
+                  {confirmedTickets.length}
+                </div>
               </div>
-              <Users className="text-blue-600" size={32} />
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="flex items-center justify-between">
+          <div className="bg-green-50 p-4 rounded-lg">
+            <div className="flex items-center">
+              <TrendingUp className="text-green-600 mr-2" size={32} />
               <div>
-                <p className="text-sm text-gray-600">Revenus totaux</p>
-                <p className="text-3xl font-bold text-green-600">
-                  {(stats.totalRevenue?.total || 0).toLocaleString()} F
-                </p>
+                <div className="text-sm text-gray-600">Revenus totaux</div>
+                <div className="text-3xl font-bold text-green-600">
+                  {totalRevenue.toLocaleString()} F
+                </div>
               </div>
-              <TrendingUp className="text-green-600" size={32} />
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="flex items-center justify-between">
+          <div className="bg-orange-50 p-4 rounded-lg">
+            <div className="flex items-center">
+              <Clock className="text-orange-600 mr-2" size={32} />
               <div>
-                <p className="text-sm text-gray-600">En attente</p>
-                <p className="text-3xl font-bold text-orange-600">
-                  {stats.pendingTickets?.count || 0}
-                </p>
+                <div className="text-sm text-gray-600">En attente</div>
+                <div className="text-3xl font-bold text-orange-600">
+                  {pendingTickets.length}
+                </div>
               </div>
-              <Clock className="text-orange-600" size={32} />
             </div>
           </div>
         </div>
@@ -394,111 +391,115 @@ const AdminDashboard = ({ onBack, isOnline, apiWorking }) => {
           )}
         </div>
 
-        {/* Tickets en attente */}
-        {Array.isArray(stats.ticketsPending) &&
-          stats.ticketsPending.length > 0 && (
-            <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-              <h2 className="text-xl font-bold mb-4">
-                ⏳ Tickets en attente ({stats.ticketsPending.length})
-              </h2>
-
-              <div className="space-y-4">
-                {stats.ticketsPending.map((ticket) => (
-                  <div
-                    key={ticket.id}
-                    className="border border-orange-200 rounded-lg p-4 bg-orange-50"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <p className="font-mono text-sm text-gray-600">
-                          {ticket.id}
-                        </p>
-                        <p className="font-semibold">
-                          {ticket.nombre_billets || ticket.nombreBillets}{" "}
-                          billet(s) -{" "}
-                          {(
-                            ticket.prix_total || ticket.prixTotal
-                          )?.toLocaleString()}{" "}
-                          FCFA
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          Paiement:{" "}
-                          {ticket.type_paiement || ticket.typePaiement}
-                          {(ticket.code_promo || ticket.codePromo) &&
-                            ` • Code: ${ticket.code_promo || ticket.codePromo}`}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Créé:{" "}
-                          {new Date(
-                            ticket.date_creation || ticket.dateCreation
-                          ).toLocaleString("fr-FR")}
-                        </p>
-                      </div>
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => validateTicket(ticket.id, "approve")}
-                          className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center space-x-1"
-                        >
-                          <CheckCircle size={16} />
-                          <span>Approuver</span>
-                        </button>
-                        <button
-                          onClick={() => validateTicket(ticket.id, "reject")}
-                          className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex items-center space-x-1"
-                        >
-                          <XCircle size={16} />
-                          <span>Rejeter</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-        {/* Tickets récents */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-xl font-bold mb-4">
-            ✅ Tickets récents confirmés
-          </h2>
-
-          {!Array.isArray(stats.ticketsRecent) ||
-          stats.ticketsRecent.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">
-              Aucun ticket confirmé
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {stats.ticketsRecent.map((ticket) => (
+        {/* Tickets en attente (style ancien) */}
+        {pendingTickets.length > 0 && (
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <h3 className="text-xl font-bold mb-4">
+              ⏳ Tickets en attente de validation ({pendingTickets.length})
+            </h3>
+            <div className="space-y-3">
+              {pendingTickets.map((ticket) => (
                 <div
                   key={ticket.id}
-                  className="border border-green-200 rounded-lg p-3 bg-green-50"
+                  className="bg-orange-50 border border-orange-200 rounded-lg p-4"
                 >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="font-mono text-sm text-gray-600">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="font-mono text-sm text-gray-600">
                         {ticket.id}
-                      </p>
-                      <p className="text-sm">
-                        {ticket.nombre_billets || ticket.nombreBillets}{" "}
+                      </div>
+                      <div className="font-semibold">
+                        {ticket.nombreBillets || ticket.nombre_billets}{" "}
                         billet(s) -{" "}
                         {(
-                          ticket.prix_total || ticket.prixTotal
+                          ticket.prixTotal || ticket.prix_total
                         )?.toLocaleString()}{" "}
                         FCFA
-                      </p>
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        Paiement: {ticket.typePaiement || ticket.type_paiement}{" "}
+                        • Créé:{" "}
+                        {new Date(
+                          ticket.dateCreation || ticket.date_creation
+                        ).toLocaleString("fr-FR")}
+                      </div>
+                      {(ticket.codePromo || ticket.code_promo) && (
+                        <div className="text-xs text-blue-600">
+                          Code promo: {ticket.codePromo || ticket.code_promo}
+                        </div>
+                      )}
                     </div>
-                    <div className="text-xs text-gray-500">
-                      {ticket.date_validation || ticket.dateValidation
-                        ? new Date(
-                            ticket.date_validation || ticket.dateValidation
-                          ).toLocaleString("fr-FR")
-                        : "Date non disponible"}
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => validateTicket(ticket.id, "approve")}
+                        className="px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center"
+                      >
+                        <Check size={16} className="mr-1" />
+                        Valider
+                      </button>
+                      <button
+                        onClick={() => validateTicket(ticket.id, "reject")}
+                        className="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex items-center"
+                      >
+                        <X size={16} className="mr-1" />
+                        Rejeter
+                      </button>
                     </div>
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Tickets confirmés (style ancien) */}
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <h3 className="text-xl font-bold mb-4">
+            ✅ Tickets confirmés ({confirmedTickets.length})
+          </h3>
+          {confirmedTickets.length === 0 ? (
+            <p className="text-gray-500 text-center py-4">
+              Aucun ticket confirmé
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {confirmedTickets
+                .slice(-10)
+                .reverse()
+                .map((ticket) => (
+                  <div
+                    key={ticket.id}
+                    className="bg-green-50 border border-green-200 rounded-lg p-3"
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <div className="font-mono text-sm text-gray-600">
+                          {ticket.id}
+                        </div>
+                        <div className="text-sm">
+                          {ticket.nombreBillets || ticket.nombre_billets}{" "}
+                          billet(s) -{" "}
+                          {(
+                            ticket.prixTotal || ticket.prix_total
+                          )?.toLocaleString()}{" "}
+                          FCFA
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {ticket.dateValidation || ticket.date_validation
+                          ? new Date(
+                              ticket.dateValidation || ticket.date_validation
+                            ).toLocaleString("fr-FR")
+                          : "Date non disponible"}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              {confirmedTickets.length > 10 && (
+                <p className="text-center text-gray-500 text-sm">
+                  ...et {confirmedTickets.length - 10} autres
+                </p>
+              )}
             </div>
           )}
         </div>

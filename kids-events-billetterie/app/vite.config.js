@@ -8,7 +8,7 @@ export default defineConfig({
     proxy: {
       "/api": {
         // Pour le développement local avec Netlify Dev
-        target: "http://localhost:8888",
+        target: "http://kidseventstickets.netlify.app",
         changeOrigin: true,
         secure: false,
       },
@@ -30,6 +30,6 @@ export default defineConfig({
   },
   define: {
     // Variables d'environnement pour différencier dev/prod
-    __PROD__: JSON.stringify(process.env.NODE_ENV === "production"),
+    __DEV__: JSON.stringify(process.env.NODE_ENV === "development"),
   },
 });

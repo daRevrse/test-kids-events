@@ -19,8 +19,8 @@ const AdminDashboard = ({ onBack, isOnline, apiWorking }) => {
     totalTickets: { count: 0 },
     pendingTickets: { count: 0 },
     totalRevenue: { total: 0 },
-    ticketsPending: [],
-    ticketsRecent: [],
+    ticketsPending: {},
+    ticketsRecent: {},
   });
 
   const [loading, setLoading] = useState(true);

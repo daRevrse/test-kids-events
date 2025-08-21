@@ -19,8 +19,8 @@ const AdminDashboard = ({ onBack, isOnline, apiWorking }) => {
     totalTickets: { count: 0 },
     pendingTickets: { count: 0 },
     totalRevenue: { total: 0 },
-    ticketsPending: {},
-    ticketsRecent: {},
+    ticketsPending: [],
+    ticketsRecent: [],
   });
 
   const [loading, setLoading] = useState(true);
@@ -36,7 +36,20 @@ const AdminDashboard = ({ onBack, isOnline, apiWorking }) => {
     try {
       if (isOnline && apiWorking) {
         const data = await adminService.getStats();
-        setStats(data);
+        console.log("API Stats data:", data); // Debug
+
+        // S'assurer que les données sont des tableaux
+        setStats({
+          totalTickets: data.totalTickets || { count: 0 },
+          pendingTickets: data.pendingTickets || { count: 0 },
+          totalRevenue: data.totalRevenue || { total: 0 },
+          ticketsPending: Array.isArray(data.ticketsPending)
+            ? data.ticketsPending
+            : [],
+          ticketsRecent: Array.isArray(data.ticketsRecent)
+            ? data.ticketsRecent
+            : [],
+        });
       } else {
         // Mode hors-ligne - utiliser les données locales
         const localTickets = JSON.parse(
@@ -72,6 +85,15 @@ const AdminDashboard = ({ onBack, isOnline, apiWorking }) => {
     } catch (err) {
       console.error("Erreur chargement stats:", err);
       setError("Impossible de charger les statistiques");
+
+      // En cas d'erreur, définir des valeurs par défaut
+      setStats({
+        totalTickets: { count: 0 },
+        pendingTickets: { count: 0 },
+        totalRevenue: { total: 0 },
+        ticketsPending: [],
+        ticketsRecent: [],
+      });
     } finally {
       setLoading(false);
     }
@@ -373,64 +395,67 @@ const AdminDashboard = ({ onBack, isOnline, apiWorking }) => {
         </div>
 
         {/* Tickets en attente */}
-        {stats.ticketsPending?.length > 0 && (
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-            <h2 className="text-xl font-bold mb-4">
-              ⏳ Tickets en attente ({stats.ticketsPending.length})
-            </h2>
+        {Array.isArray(stats.ticketsPending) &&
+          stats.ticketsPending.length > 0 && (
+            <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+              <h2 className="text-xl font-bold mb-4">
+                ⏳ Tickets en attente ({stats.ticketsPending.length})
+              </h2>
 
-            <div className="space-y-4">
-              {stats.ticketsPending.map((ticket) => (
-                <div
-                  key={ticket.id}
-                  className="border border-orange-200 rounded-lg p-4 bg-orange-50"
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <p className="font-mono text-sm text-gray-600">
-                        {ticket.id}
-                      </p>
-                      <p className="font-semibold">
-                        {ticket.nombre_billets || ticket.nombreBillets}{" "}
-                        billet(s) -{" "}
-                        {(
-                          ticket.prix_total || ticket.prixTotal
-                        )?.toLocaleString()}{" "}
-                        FCFA
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        Paiement: {ticket.type_paiement || ticket.typePaiement}
-                        {ticket.code_promo && ` • Code: ${ticket.code_promo}`}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Créé:{" "}
-                        {new Date(
-                          ticket.date_creation || ticket.dateCreation
-                        ).toLocaleString("fr-FR")}
-                      </p>
-                    </div>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => validateTicket(ticket.id, "approve")}
-                        className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center space-x-1"
-                      >
-                        <CheckCircle size={16} />
-                        <span>Approuver</span>
-                      </button>
-                      <button
-                        onClick={() => validateTicket(ticket.id, "reject")}
-                        className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex items-center space-x-1"
-                      >
-                        <XCircle size={16} />
-                        <span>Rejeter</span>
-                      </button>
+              <div className="space-y-4">
+                {stats.ticketsPending.map((ticket) => (
+                  <div
+                    key={ticket.id}
+                    className="border border-orange-200 rounded-lg p-4 bg-orange-50"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <p className="font-mono text-sm text-gray-600">
+                          {ticket.id}
+                        </p>
+                        <p className="font-semibold">
+                          {ticket.nombre_billets || ticket.nombreBillets}{" "}
+                          billet(s) -{" "}
+                          {(
+                            ticket.prix_total || ticket.prixTotal
+                          )?.toLocaleString()}{" "}
+                          FCFA
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Paiement:{" "}
+                          {ticket.type_paiement || ticket.typePaiement}
+                          {(ticket.code_promo || ticket.codePromo) &&
+                            ` • Code: ${ticket.code_promo || ticket.codePromo}`}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Créé:{" "}
+                          {new Date(
+                            ticket.date_creation || ticket.dateCreation
+                          ).toLocaleString("fr-FR")}
+                        </p>
+                      </div>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => validateTicket(ticket.id, "approve")}
+                          className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center space-x-1"
+                        >
+                          <CheckCircle size={16} />
+                          <span>Approuver</span>
+                        </button>
+                        <button
+                          onClick={() => validateTicket(ticket.id, "reject")}
+                          className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex items-center space-x-1"
+                        >
+                          <XCircle size={16} />
+                          <span>Rejeter</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
         {/* Tickets récents */}
         <div className="bg-white rounded-xl shadow-lg p-6">
@@ -438,7 +463,8 @@ const AdminDashboard = ({ onBack, isOnline, apiWorking }) => {
             ✅ Tickets récents confirmés
           </h2>
 
-          {!stats.ticketsRecent || stats.ticketsRecent.length === 0 ? (
+          {!Array.isArray(stats.ticketsRecent) ||
+          stats.ticketsRecent.length === 0 ? (
             <p className="text-gray-500 text-center py-8">
               Aucun ticket confirmé
             </p>
@@ -464,9 +490,11 @@ const AdminDashboard = ({ onBack, isOnline, apiWorking }) => {
                       </p>
                     </div>
                     <div className="text-xs text-gray-500">
-                      {new Date(
-                        ticket.date_validation || ticket.dateValidation
-                      ).toLocaleString("fr-FR")}
+                      {ticket.date_validation || ticket.dateValidation
+                        ? new Date(
+                            ticket.date_validation || ticket.dateValidation
+                          ).toLocaleString("fr-FR")
+                        : "Date non disponible"}
                     </div>
                   </div>
                 </div>

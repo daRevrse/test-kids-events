@@ -10,6 +10,7 @@ import {
   AlertTriangle,
   Wifi,
   WifiOff,
+  Ticket,
 } from "lucide-react";
 
 import { adminService, ticketService } from "../services/api";
@@ -326,7 +327,7 @@ const AdminDashboard = ({ onBack, isOnline = true, apiWorking = true }) => {
                   {stats.totalTickets?.count || 0}
                 </p>
               </div>
-              <Users className="text-blue-600" size={32} />
+              <Ticket className="text-blue-600" size={32} />
             </div>
           </div>
 

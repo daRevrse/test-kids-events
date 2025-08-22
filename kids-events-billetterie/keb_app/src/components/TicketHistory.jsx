@@ -1,11 +1,13 @@
 // src/components/TicketHistory.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Download, Clock, CheckCircle, XCircle, RefreshCw } from "lucide-react";
 import { localTicketService, ticketService } from "../services/api";
 
 const TicketHistory = ({ onBack }) => {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [generatingPDF, setGeneratingPDF] = useState(null);
+  const ticketRefs = useRef({});
 
   const loadTickets = () => {
     const history = localTicketService.getTicketHistory();
@@ -31,10 +33,17 @@ const TicketHistory = ({ onBack }) => {
     loadTickets();
   }, []);
 
-  const downloadTicket = (ticket) => {
-    // À implémenter - génération PDF
-    console.log("Télécharger ticket:", ticket);
-    alert("Fonctionnalité de téléchargement PDF à implémenter");
+  // Dans TicketHistory.jsx - modifiez la fonction downloadTicket
+  const downloadTicket = async (ticket) => {
+    setGeneratingPDF(ticket.id);
+    try {
+      await ticketService.generateTicketPDF(ticket);
+    } catch (error) {
+      console.error("Erreur génération PDF:", error);
+      alert("Erreur lors de la génération du PDF: " + error.message);
+    } finally {
+      setGeneratingPDF(null);
+    }
   };
 
   const getStatusIcon = (status) => {
@@ -132,10 +141,15 @@ const TicketHistory = ({ onBack }) => {
                       {ticket.statut === "confirmed" && (
                         <button
                           onClick={() => downloadTicket(ticket)}
-                          className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                          disabled={generatingPDF === ticket.id}
+                          className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-blue-300 disabled:cursor-not-allowed flex items-center justify-center"
                           title="Télécharger PDF"
                         >
-                          <Download size={16} />
+                          {generatingPDF === ticket.id ? (
+                            <RefreshCw size={16} className="animate-spin" />
+                          ) : (
+                            <Download size={16} />
+                          )}
                         </button>
                       )}
                     </div>

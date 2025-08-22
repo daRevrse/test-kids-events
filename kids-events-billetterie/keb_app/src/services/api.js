@@ -1,5 +1,6 @@
 // src/services/api.js
 import axios from "axios";
+import pdfService from "./pdfService";
 
 // Configuration de base pour l'API
 const API_BASE_URL = import.meta.env.PROD
@@ -158,6 +159,15 @@ export const ticketService = {
       return response.data;
     } catch (error) {
       console.error("Erreur lors de la récupération du ticket:", error);
+      throw error;
+    }
+  },
+
+  async generateTicketPDF(ticketData, element = null) {
+    try {
+      return await pdfService.generateTicketPDF(ticketData, element);
+    } catch (error) {
+      console.error("Erreur génération PDF:", error);
       throw error;
     }
   },

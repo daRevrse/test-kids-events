@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   QrCode,
   Scan,
@@ -12,6 +12,8 @@ import {
   Wifi,
   WifiOff,
   AlertTriangle,
+  Download,
+  RefreshCw,
 } from "lucide-react";
 
 // Import des services API et composants
@@ -28,6 +30,7 @@ import AdminDashboard from "./components/AdminDashboard";
 import TicketHistory from "./components/TicketHistory";
 import TicketController from "./components/TicketController";
 import AdminLogin from "./components/AdminLogin";
+import TicketPDFTemplate from "./components/TicketPDFTemplateSpl";
 
 // Hook pour gestion du localStorage avec fallback
 const useLocalStorage = (key, initialValue) => {
@@ -879,85 +882,123 @@ export default function TicketingApp() {
   );
 
   // Composant Ticket Généré
-  const TicketGeneratedView = () => (
-    <div className="min-h-screen bg-gradient-to-b from-green-50 to-red-50 p-4">
-      <ConnectivityAlert isOnline={isOnline} apiWorking={apiWorking} />
+  const TicketGeneratedView = () => {
+    const ticketRef = useRef(null);
+    const [generatingPDF, setGeneratingPDF] = useState(false);
 
-      <div className="max-w-md mx-auto mt-8">
-        <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-          <div className="bg-green-500 text-white rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-            <Check size={32} />
-          </div>
+    const downloadTicketPDF = async () => {
+      if (!currentTicket) return;
 
-          <h2 className="text-xl font-bold mb-4 text-green-600">
-            Paiement confirmé !
-          </h2>
+      setGeneratingPDF(true);
+      try {
+        await ticketService.generateTicketPDF(currentTicket, ticketRef.current);
+      } catch (error) {
+        console.error("Erreur génération PDF:", error);
+        alert("Erreur lors de la génération du PDF");
+      } finally {
+        setGeneratingPDF(false);
+      }
+    };
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-green-50 to-red-50 p-4">
+        <ConnectivityAlert isOnline={isOnline} apiWorking={apiWorking} />
 
-          {currentTicket && (
-            <div className="bg-gray-50 p-4 rounded-lg mb-6">
-              <div className="border-2 border-gray-300 rounded-lg p-4 mb-4">
-                <QrCode size={64} className="mx-auto mb-2" />
-                <p className="text-xs text-gray-500 font-mono break-all">
-                  {currentTicket.qrCode}
-                </p>
-              </div>
+        <div ref={ticketRef} style={{ display: "none" }}>
+          <TicketPDFTemplate ticket={currentTicket} />
+        </div>
 
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span>ID Ticket:</span>
-                  <span className="font-mono text-xs">{currentTicket.id}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Nombre de billets:</span>
-                  <span>{currentTicket.nombreBillets}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Prix total:</span>
-                  <span className="font-semibold">
-                    {currentTicket.prixTotal.toLocaleString()} FCFA
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Mode de paiement:</span>
-                  <span className="capitalize">
-                    {currentTicket.typePaiement.replace("-", " ")}
-                  </span>
-                </div>
-                {currentTicket.isOffline && (
-                  <div className="text-orange-600 text-xs mt-2">
-                    ⚠️ Ticket créé hors-ligne - Synchronisation requise
-                  </div>
-                )}
-              </div>
+        <div className="max-w-md mx-auto mt-8">
+          <div className="bg-white rounded-xl shadow-lg p-6 text-center">
+            <div className="bg-green-500 text-white rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+              <Check size={32} />
             </div>
-          )}
 
-          <p className="text-sm text-gray-600 mb-6">
-            Présentez ce QR code à l'entrée de l'événement
-          </p>
+            <h2 className="text-xl font-bold mb-4 text-green-600">
+              Paiement confirmé !
+            </h2>
 
-          <div className="space-y-3">
-            <button
-              onClick={() => {
-                setCurrentView("qr-scan");
-                resetForm();
-              }}
-              className="w-full bg-green-500 text-white py-3 rounded-lg font-semibold hover:bg-green-600"
-            >
-              Nouveau ticket
-            </button>
+            {currentTicket && (
+              <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                <div className="border-2 border-gray-300 rounded-lg p-4 mb-4">
+                  <QrCode size={64} className="mx-auto mb-2" />
+                  <p className="text-xs text-gray-500 font-mono break-all">
+                    {currentTicket.qrCode}
+                  </p>
+                </div>
 
-            <button
-              onClick={() => setCurrentView("admin")}
-              className="w-full bg-blue-500 text-white py-3 rounded-lg font-semibold hover:bg-blue-600"
-            >
-              Accès Admin
-            </button>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span>ID Ticket:</span>
+                    <span className="font-mono text-xs">
+                      {currentTicket.id}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Nombre de billets:</span>
+                    <span>{currentTicket.nombreBillets}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Prix total:</span>
+                    <span className="font-semibold">
+                      {currentTicket.prixTotal.toLocaleString()} FCFA
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Mode de paiement:</span>
+                    <span className="capitalize">
+                      {currentTicket.typePaiement.replace("-", " ")}
+                    </span>
+                  </div>
+                  {currentTicket.isOffline && (
+                    <div className="text-orange-600 text-xs mt-2">
+                      ⚠️ Ticket créé hors-ligne - Synchronisation requise
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <p className="text-sm text-gray-600 mb-6">
+              Présentez ce QR code à l'entrée de l'événement
+            </p>
+
+            <div className="space-y-3">
+              <button
+                onClick={downloadTicketPDF}
+                disabled={generatingPDF}
+                className="w-full bg-blue-500 text-white py-3 rounded-lg font-semibold hover:bg-blue-600 disabled:bg-blue-300 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+              >
+                {generatingPDF ? (
+                  <RefreshCw size={16} className="animate-spin" />
+                ) : (
+                  <Download size={16} />
+                )}
+                <span>
+                  {generatingPDF ? "Génération..." : "Télécharger PDF"}
+                </span>
+              </button>
+              <button
+                onClick={() => {
+                  setCurrentView("qr-scan");
+                  resetForm();
+                }}
+                className="w-full bg-green-500 text-white py-3 rounded-lg font-semibold hover:bg-green-600"
+              >
+                Nouveau ticket
+              </button>
+
+              <button
+                onClick={() => setCurrentView("admin")}
+                className="w-full bg-blue-500 text-white py-3 rounded-lg font-semibold hover:bg-blue-600"
+              >
+                Accès Admin
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Composant Ticket En Attente
   const TicketPendingView = () => (

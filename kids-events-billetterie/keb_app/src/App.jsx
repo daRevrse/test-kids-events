@@ -30,7 +30,6 @@ import AdminDashboard from "./components/AdminDashboard";
 import TicketHistory from "./components/TicketHistory";
 import TicketController from "./components/TicketController";
 import AdminLogin from "./components/AdminLogin";
-import TicketPDFTemplate from "./components/TicketPDFTemplateSpl";
 
 // Hook pour gestion du localStorage avec fallback
 const useLocalStorage = (key, initialValue) => {
@@ -902,10 +901,6 @@ export default function TicketingApp() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-green-50 to-red-50 p-4">
         <ConnectivityAlert isOnline={isOnline} apiWorking={apiWorking} />
-
-        <div ref={ticketRef} style={{ display: "none" }}>
-          <TicketPDFTemplate ticket={currentTicket} />
-        </div>
 
         <div className="max-w-md mx-auto mt-8">
           <div className="bg-white rounded-xl shadow-lg p-6 text-center">

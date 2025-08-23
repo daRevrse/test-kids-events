@@ -737,7 +737,7 @@ export default function TicketingApp() {
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center">
                     <img
-                      src={`${process.env.VITE_API_BASE_URL}/src/images/moov.jpg`}
+                      src={`${process.env.VITE_API_BASE_URL}moov.jpg`}
                       alt="moov"
                       className="w-full h-full object-cover"
                     />
@@ -756,7 +756,7 @@ export default function TicketingApp() {
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center">
                     <img
-                      src={`${process.env.VITE_API_BASE_URL}/src/images/togocom.jpg`}
+                      src={`${process.env.VITE_API_BASE_URL}togocom.jpg`}
                       alt="Togocom"
                       className="w-full h-full object-cover"
                     />

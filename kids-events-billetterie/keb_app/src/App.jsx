@@ -731,27 +731,16 @@ export default function TicketingApp() {
           ) : (
             <div className="space-y-4">
               <div
-                onClick={() => simulateMobileMoneyPayment("MTN")}
-                className="p-4 border-2 border-gray-200 rounded-lg hover:border-yellow-500 cursor-pointer transition-colors"
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center text-white font-bold">
-                    MTN
-                  </div>
-                  <div>
-                    <div className="font-semibold">MTN Mobile Money</div>
-                    <div className="text-sm text-gray-500">Composez *133#</div>
-                  </div>
-                </div>
-              </div>
-
-              <div
                 onClick={() => simulateMobileMoneyPayment("MOOV")}
                 className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 cursor-pointer transition-colors"
               >
                 <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
-                    MOOV
+                  <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center">
+                    <img
+                      src={`${process.env.VITE_API_BASE_URL}/src/images/moov.jpg`}
+                      alt="moov"
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                   <div>
                     <div className="font-semibold">Moov Money</div>
@@ -765,12 +754,16 @@ export default function TicketingApp() {
                 className="p-4 border-2 border-gray-200 rounded-lg hover:border-green-500 cursor-pointer transition-colors"
               >
                 <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white font-bold">
-                    TCEL
+                  <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center">
+                    <img
+                      src={`${process.env.VITE_API_BASE_URL}/src/images/togocom.jpg`}
+                      alt="Togocom"
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                   <div>
-                    <div className="font-semibold">Togocom</div>
-                    <div className="text-sm text-gray-500">Composez *890#</div>
+                    <div className="font-semibold">Mixx by YAS</div>
+                    {/* <div className="text-sm text-gray-500">Composez *890#</div> */}
                   </div>
                 </div>
               </div>

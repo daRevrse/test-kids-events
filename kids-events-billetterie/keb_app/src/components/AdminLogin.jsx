@@ -1,19 +1,18 @@
 // src/components/AdminLogin.jsx
 import React, { useState } from "react";
 import { Lock, ArrowLeft } from "lucide-react";
-
-const AdminLogin = ({ onLogin, onBack }) => {
+import { useNavigate } from "react-router-dom";
+const AdminLogin = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    // Vérification simple - à remplacer par une vérification plus sécurisée
     if (username === "admin" && password === "admin123") {
       localStorage.setItem("adminAuthenticated", "true");
-      onLogin();
+      navigate("/admin/dashboard");
     } else {
       setError("Identifiants incorrects");
     }
@@ -25,7 +24,7 @@ const AdminLogin = ({ onLogin, onBack }) => {
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold">Connexion Admin</h2>
           <button
-            onClick={onBack}
+            onClick={() => navigate("/")}
             className="flex items-center space-x-1 text-blue-500 hover:text-blue-600"
           >
             <ArrowLeft size={16} />
@@ -76,6 +75,7 @@ const AdminLogin = ({ onLogin, onBack }) => {
             </div>
           </button>
         </form>
+        <button onClick={() => navigate("/")}>Retour à l'accueil</button>
       </div>
     </div>
   );

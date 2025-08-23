@@ -15,7 +15,7 @@ import {
   Download,
   RefreshCw,
 } from "lucide-react";
-
+import { useNavigate, useLocation } from "react-router-dom";
 // Import des services API et composants
 import {
   eventService,
@@ -110,6 +110,10 @@ export default function TicketingApp() {
   const [currentTicket, setCurrentTicket] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const [selectedTicketType, setSelectedTicketType] = useState(null);
 
   // États pour les données
   const [events, setEvents] = useState([]);
@@ -147,22 +151,22 @@ export default function TicketingApp() {
   // Charger les événements au démarrage
   useEffect(() => {
     loadEvents();
-    testAPIConnection();
+    // testAPIConnection();
   }, []);
 
   // Test de connectivité API
-  const testAPIConnection = async () => {
-    try {
-      const result = await apiUtils.testConnection();
-      setApiWorking(result.success);
-      if (!result.success) {
-        console.warn("API non accessible, utilisation du cache local");
-      }
-    } catch (error) {
-      setApiWorking(false);
-      console.error("Test API failed:", error);
-    }
-  };
+  // const testAPIConnection = async () => {
+  //   try {
+  //     const result = await apiUtils.testConnection();
+  //     setApiWorking(result.success);
+  //     if (!result.success) {
+  //       console.warn("API non accessible, utilisation du cache local");
+  //     }
+  //   } catch (error) {
+  //     setApiWorking(false);
+  //     console.error("Test API failed:", error);
+  //   }
+  // };
 
   // Charger les événements
   const loadEvents = async () => {
@@ -426,14 +430,6 @@ export default function TicketingApp() {
           </h1>
           <h2 className="text-lg text-gray-600 mb-6">KIDS EVENTS</h2>
 
-          {/* <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 mb-6">
-            <Scan size={48} className="mx-auto text-gray-400 mb-2" />
-            <p className="text-gray-500">
-              Scannez le QR code pour acheter vos billets
-            </p>
-          </div> */}
-
-          {/* Indicateur de statut API */}
           <div
             className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full text-xs mb-4 ${
               isOnline && apiWorking
@@ -451,58 +447,26 @@ export default function TicketingApp() {
             </span>
           </div>
 
-          {showAdminLogin ? (
-            <AdminLogin
-              onLogin={() => {
-                setAdminAuthenticated(true);
-                setShowAdminLogin(false);
-                setCurrentView("admin");
-              }}
-              onBack={() => setShowAdminLogin(false)}
-            />
-          ) : showTicketHistory ? (
+          <button
+            onClick={() => setCurrentView("ticket-selection")}
+            className="w-full bg-green-500 text-white py-3 rounded-lg font-semibold hover:bg-green-600 transition-colors mb-4"
+          >
+            Acheter des billets
+          </button>
+
+          <button
+            onClick={() => setShowTicketHistory(true)}
+            className="w-full bg-purple-500 text-white py-2 rounded-lg font-semibold hover:bg-purple-600 transition-colors"
+          >
+            Mes Tickets
+          </button>
+
+          {showTicketHistory && (
             <TicketHistory onBack={() => setShowTicketHistory(false)} />
-          ) : showTicketController ? (
+          )}
+
+          {showTicketController && (
             <TicketController onBack={() => setShowTicketController(false)} />
-          ) : (
-            <>
-              <button
-                onClick={() => setCurrentView("ticket-selection")}
-                className="w-full bg-green-500 text-white py-3 rounded-lg font-semibold hover:bg-green-600 transition-colors mb-4"
-              >
-                Acheter des billets
-              </button>
-
-              <button
-                onClick={() => setShowTicketHistory(true)}
-                className="w-full bg-purple-500 text-white py-2 rounded-lg font-semibold hover:bg-purple-600 transition-colors"
-              >
-                Mes Tickets
-              </button>
-
-              <button
-                onClick={() => setShowTicketController(true)}
-                className="w-full bg-orange-500 text-white py-2 rounded-lg font-semibold hover:bg-orange-600 transition-colors"
-              >
-                Contrôle d'accès
-              </button>
-
-              {adminAuthenticated ? (
-                <button
-                  onClick={() => setCurrentView("admin")}
-                  className="w-full bg-blue-500 text-white py-2 rounded-lg font-semibold hover:bg-blue-600 transition-colors"
-                >
-                  Accès Admin
-                </button>
-              ) : (
-                <button
-                  onClick={() => setShowAdminLogin(true)}
-                  className="w-full bg-blue-500 text-white py-2 rounded-lg font-semibold hover:bg-blue-600 transition-colors"
-                >
-                  Connexion Admin
-                </button>
-              )}
-            </>
           )}
         </div>
       </div>
@@ -520,127 +484,154 @@ export default function TicketingApp() {
             Sélection des billets
           </h2>
 
-          {currentEvent && (
-            <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-              <h3 className="font-semibold text-blue-900">
-                {currentEvent.nom}
-              </h3>
-              <p className="text-sm text-blue-700">
-                Prix: {currentEvent.prix_unitaire?.toLocaleString()} FCFA
-              </p>
-              {currentEvent.stock_restant && (
-                <p className="text-xs text-blue-600">
-                  Stock disponible: {currentEvent.stock_restant}
-                </p>
-              )}
-            </div>
-          )}
-
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-600 text-sm">{error}</p>
-            </div>
-          )}
-
+          {/* Sélection du type de billet */}
           <div className="mb-6">
             <label className="block text-sm font-medium mb-2">
-              Nombre de billets
+              Type de billet
             </label>
-            <div className="flex items-center justify-center space-x-4">
-              <button
-                onClick={() => {
-                  setSelectedTickets(Math.max(1, selectedTickets - 1));
-                  setError("");
-                }}
-                className="w-12 h-12 bg-red-500 text-white rounded-full flex items-center justify-center text-xl font-bold"
-              >
-                -
-              </button>
-              <span className="text-2xl font-bold w-8 text-center">
-                {selectedTickets}
-              </span>
-              <button
-                onClick={() => {
-                  setSelectedTickets(selectedTickets + 1);
-                  setError("");
-                }}
-                className="w-12 h-12 bg-green-500 text-white rounded-full flex items-center justify-center text-xl font-bold"
-              >
-                +
-              </button>
+            <div className="grid grid-cols-1 gap-2">
+              {events.map((event) => (
+                <button
+                  key={event.id}
+                  onClick={() => {
+                    setCurrentEvent(event);
+                    setSelectedTicketType(event.nom);
+                    setSelectedTickets(1);
+                    setError("");
+                  }}
+                  className={`p-3 border-2 rounded-lg text-left transition-colors ${
+                    currentEvent?.id === event.id
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-gray-200 hover:border-gray-300"
+                  }`}
+                >
+                  <div className="font-semibold">{event.nom}</div>
+                  <div className="text-sm text-gray-600">
+                    {event.prix_unitaire?.toLocaleString()} FCFA
+                  </div>
+                  {event.stock_restant && (
+                    <div className="text-xs text-blue-600">
+                      Disponible: {event.stock_restant}
+                    </div>
+                  )}
+                </button>
+              ))}
             </div>
           </div>
 
-          <div className="mb-6">
-            <label className="block text-sm font-medium mb-2">
-              Code de réduction (optionnel)
-            </label>
-            <div className="flex space-x-2">
-              <input
-                type="text"
-                value={promoCode}
-                onChange={(e) => {
-                  setPromoCode(e.target.value.toUpperCase());
-                  setError("");
-                }}
-                placeholder="NOEL2024"
-                className="flex-1 p-3 border border-gray-300 rounded-lg"
-                disabled={loading}
-              />
-              <button
-                onClick={validatePromoCode}
-                disabled={loading || !promoCode.trim()}
-                className="px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
-              >
-                {loading ? "..." : "Valider"}
-              </button>
-            </div>
-            {promoDiscount > 0 && (
-              <p className="text-green-600 text-sm mt-2">
-                ✅ Réduction de {promoDiscount}% appliquée
-              </p>
-            )}
-          </div>
-
-          <div className="bg-gray-50 p-4 rounded-lg mb-6">
-            <div className="flex justify-between mb-2">
-              <span>Prix unitaire:</span>
-              <span>
-                {currentEvent?.prix_unitaire?.toLocaleString() || "5,000"} FCFA
-              </span>
-            </div>
-            <div className="flex justify-between mb-2">
-              <span>Quantité:</span>
-              <span>{selectedTickets}</span>
-            </div>
-            {promoDiscount > 0 && (
-              <div className="flex justify-between mb-2 text-green-600">
-                <span>Réduction ({promoDiscount}%):</span>
-                <span>
-                  -
-                  {(
-                    ((currentEvent?.prix_unitaire || 5000) *
-                      selectedTickets *
-                      promoDiscount) /
-                    100
-                  ).toLocaleString()}{" "}
-                  FCFA
-                </span>
+          {selectedTicketType && (
+            <>
+              {/* Reste du code existant pour la quantité et code promo */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium mb-2">
+                  Quantité
+                </label>
+                <div className="flex items-center justify-center space-x-4">
+                  <button
+                    onClick={() => {
+                      setSelectedTickets(Math.max(1, selectedTickets - 1));
+                      setError("");
+                    }}
+                    className="w-12 h-12 bg-red-500 text-white rounded-full flex items-center justify-center text-xl font-bold"
+                  >
+                    -
+                  </button>
+                  <span className="text-2xl font-bold w-8 text-center">
+                    {selectedTickets}
+                  </span>
+                  <button
+                    onClick={() => {
+                      if (
+                        currentEvent &&
+                        currentEvent.stock_restant &&
+                        selectedTickets < currentEvent.stock_restant
+                      ) {
+                        setSelectedTickets(selectedTickets + 1);
+                        setError("");
+                      } else {
+                        setError("Stock insuffisant");
+                      }
+                    }}
+                    className="w-12 h-12 bg-green-500 text-white rounded-full flex items-center justify-center text-xl font-bold"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
-            )}
-            <hr className="my-2" />
-            <div className="flex justify-between font-bold text-lg">
-              <span>Total:</span>
-              <span>{calculateTotalPrice().toLocaleString()} FCFA</span>
-            </div>
-          </div>
 
-          <button
-            onClick={() => setCurrentView("payment-selection")}
-            className="w-full bg-green-500 text-white py-3 rounded-lg font-semibold hover:bg-green-600 transition-colors"
-          >
-            Continuer vers le paiement
-          </button>
+              <div className="mb-6">
+                <label className="block text-sm font-medium mb-2">
+                  Code de réduction (optionnel)
+                </label>
+                <div className="flex space-x-2">
+                  <input
+                    type="text"
+                    value={promoCode}
+                    onChange={(e) => {
+                      setPromoCode(e.target.value.toUpperCase());
+                      setError("");
+                    }}
+                    placeholder="NOEL2024"
+                    className="flex-1 p-3 border border-gray-300 rounded-lg"
+                    disabled={loading}
+                  />
+                  <button
+                    onClick={validatePromoCode}
+                    disabled={loading || !promoCode.trim()}
+                    className="px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  >
+                    {loading ? "..." : "Valider"}
+                  </button>
+                </div>
+                {promoDiscount > 0 && (
+                  <p className="text-green-600 text-sm mt-2">
+                    ✅ Réduction de {promoDiscount}% appliquée
+                  </p>
+                )}
+              </div>
+
+              <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                <div className="flex justify-between mb-2">
+                  <span>Prix unitaire:</span>
+                  <span>
+                    {currentEvent?.prix_unitaire?.toLocaleString() || "5,000"}{" "}
+                    FCFA
+                  </span>
+                </div>
+                <div className="flex justify-between mb-2">
+                  <span>Quantité:</span>
+                  <span>{selectedTickets}</span>
+                </div>
+                {promoDiscount > 0 && (
+                  <div className="flex justify-between mb-2 text-green-600">
+                    <span>Réduction ({promoDiscount}%):</span>
+                    <span>
+                      -
+                      {(
+                        ((currentEvent?.prix_unitaire || 5000) *
+                          selectedTickets *
+                          promoDiscount) /
+                        100
+                      ).toLocaleString()}{" "}
+                      FCFA
+                    </span>
+                  </div>
+                )}
+                <hr className="my-2" />
+                <div className="flex justify-between font-bold text-lg">
+                  <span>Total:</span>
+                  <span>{calculateTotalPrice().toLocaleString()} FCFA</span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setCurrentView("payment-selection")}
+                className="w-full bg-green-500 text-white py-3 rounded-lg font-semibold hover:bg-green-600 transition-colors"
+              >
+                Continuer vers le paiement
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -916,9 +907,9 @@ export default function TicketingApp() {
               <div className="bg-gray-50 p-4 rounded-lg mb-6">
                 <div className="border-2 border-gray-300 rounded-lg p-4 mb-4">
                   <QrCode size={64} className="mx-auto mb-2" />
-                  <p className="text-xs text-gray-500 font-mono break-all">
+                  {/* <p className="text-xs text-gray-500 font-mono break-all">
                     {currentTicket.qrCode}
-                  </p>
+                  </p> */}
                 </div>
 
                 <div className="space-y-2 text-sm">
@@ -982,12 +973,15 @@ export default function TicketingApp() {
                 Nouveau ticket
               </button>
 
-              <button
-                onClick={() => setCurrentView("admin")}
+              {/* <button
+                onClick={() =>
+                  // setCurrentView("admin")
+                  navigate("/admin/dashboard")
+                }
                 className="w-full bg-blue-500 text-white py-3 rounded-lg font-semibold hover:bg-blue-600"
               >
                 Accès Admin
-              </button>
+              </button> */}
             </div>
           </div>
         </div>
@@ -1031,12 +1025,6 @@ export default function TicketingApp() {
           </p>
           <div className="space-y-3">
             <button
-              onClick={() => setCurrentView("admin")}
-              className="w-full bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600"
-            >
-              Vérifier le statut (Admin)
-            </button>
-            <button
               onClick={() => {
                 setCurrentView("qr-scan");
                 resetForm();
@@ -1071,13 +1059,7 @@ export default function TicketingApp() {
       case "ticket-pending":
         return <TicketPendingView />;
       case "admin":
-        return (
-          <AdminDashboard
-            onBack={() => setCurrentView("qr-scan")}
-            isOnline={isOnline}
-            apiWorking={apiWorking}
-          />
-        );
+        return <AdminDashboard />;
       default:
         return <QRScanView />;
     }

@@ -144,36 +144,14 @@ const initDatabase = () => {
         // Insertion des données de test
         db.get("SELECT COUNT(*) as count FROM events", (err, row) => {
           if (!err && row && row.count === 0) {
-            // Insertion des événements avec nouvelle grille tarifaire
-            const events = [
-              ["Baby Zone (2-3 ans)", "2024-12-25", 1500, 100, 100],
-              ["Pack Village (4-12 ans)", "2024-12-25", 3500, 200, 200],
-              ["Adulte accompagnant", "2024-12-25", 1000, 150, 150],
-              ["Zone Riding (10min)", "2024-12-25", 1000, 50, 50],
-              ["Sticky Wall + Ninja trampoline", "2024-12-25", 1500, 30, 30],
-              ["Spectacles (soir)", "2024-12-25", 2000, 100, 100],
-            ];
-
-            events.forEach(
-              ([
-                nom,
-                date_event,
-                prix_unitaire,
-                stock_total,
-                stock_restant,
-              ]) => {
-                db.run(
-                  `
-    INSERT INTO events (nom, date_event, prix_unitaire, stock_total, stock_restant)
-    VALUES (?, ?, ?, ?, ?)
-    `,
-                  [nom, date_event, prix_unitaire, stock_total, stock_restant],
-                  (err) => {
-                    if (err)
-                      console.error(`Error inserting event ${nom}:`, err);
-                    else console.log(`Event ${nom} inserted`);
-                  }
-                );
+            db.run(
+              `
+              INSERT INTO events (nom, date_event, prix_unitaire, stock_total, stock_restant)
+              VALUES ('Village de Noël KIDS EVENTS', '2024-12-25', 5000, 200, 200)
+            `,
+              (err) => {
+                if (err) console.error("Error inserting test event:", err);
+                else console.log("Test event inserted");
               }
             );
           }
@@ -695,33 +673,7 @@ app.get("/api/tickets/:id", (req, res) => {
   }
 
   const ticketId = req.params.id;
-
-  const query = `
-    SELECT 
-      t.id AS ticket_id,
-      t.event_id,
-      t.code_unique,
-      t.qr_code,
-      t.nombre_billets,
-      t.prix_total,
-      t.type_paiement,
-      t.code_promo,
-      t.statut,
-      t.date_creation,
-      t.date_validation,
-      e.id AS event_id,
-      e.nom AS event_nom,
-      e.date_event AS event_date,
-      e.prix_unitaire AS event_prix_unitaire,
-      e.stock_total AS event_stock_total,
-      e.stock_restant AS event_stock_restant,
-      e.created_at AS event_created_at
-    FROM tickets t
-    JOIN events e ON t.event_id = e.id
-    WHERE t.id = ?
-  `;
-
-  db.get(query, [ticketId], (err, row) => {
+  db.get("SELECT * FROM tickets WHERE id = ?", [ticketId], (err, row) => {
     if (err) {
       console.error("Error fetching ticket:", err);
       return res.status(500).json({ error: "Error fetching ticket" });
@@ -731,37 +683,7 @@ app.get("/api/tickets/:id", (req, res) => {
       return res.status(404).json({ error: "Ticket not found" });
     }
 
-    // On restructure la réponse pour séparer ticket et event
-    const response = {
-      ticket: {
-        id: row.ticket_id,
-        event_id: row.event_id,
-        codeUnique: row.code_unique,
-        qrCode: row.qr_code,
-        nombreBillets: row.nombre_billets,
-        prixTotal: row.prix_total,
-        typePaiement: row.type_paiement,
-        codePromo: row.code_promo,
-        statut: row.statut,
-        dateCreation: row.date_creation,
-        dateValidation: row.date_validation,
-      },
-      event: {
-        event_nom: row.event_nom,
-        event_date: row.event_date,
-        event_prix_unitaire: row.event_prix_unitaire,
-        event_stock_total: row.event_stock_total,
-        event_stock_restant: row.event_stock_restant,
-        event_created_at: row.event_created_at,
-      },
-    };
-
-    const mergedResponse = {
-      ...response.ticket,
-      ...response.event,
-    };
-
-    res.json(mergedResponse);
+    res.json(row);
   });
 });
 

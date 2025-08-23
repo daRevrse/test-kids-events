@@ -1,6 +1,13 @@
 // src/components/TicketHistory.jsx
 import React, { useState, useEffect, useRef } from "react";
-import { Download, Clock, CheckCircle, XCircle, RefreshCw } from "lucide-react";
+import {
+  Download,
+  Clock,
+  CheckCircle,
+  XCircle,
+  RefreshCw,
+  X,
+} from "lucide-react";
 import { localTicketService, ticketService } from "../services/api";
 
 const TicketHistory = ({ onBack }) => {
@@ -10,10 +17,11 @@ const TicketHistory = ({ onBack }) => {
   const ticketRefs = useRef({});
 
   const loadTickets = () => {
+    setTickets([]);
     const history = localTicketService.getTicketHistory();
     history.forEach((ticket) => {
       ticketService.getTicketById(ticket.id).then((response) => {
-        const updatedTicket = { ...ticket, ...response };
+        const updatedTicket = { ...response };
         localTicketService.saveTicketToHistory(updatedTicket);
       });
     });
@@ -82,12 +90,20 @@ const TicketHistory = ({ onBack }) => {
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold">Mes Tickets</h1>
-            <button
-              onClick={onBack}
-              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
-            >
-              Retour
-            </button>
+            <div className="flex justify-between items-center px-1">
+              <button
+                onClick={loadTickets}
+                className="flex items-center space-x-2 px-4 py-2 bg-white text-blue-500 rounded-lg hover:text-blue-600"
+              >
+                <RefreshCw size={16} />
+              </button>
+              <button
+                onClick={onBack}
+                className="px-4 py-2 bg-white text-gray-500 rounded-lg hover:text-gray-600"
+              >
+                <X size={16} />
+              </button>
+            </div>
           </div>
 
           {tickets.length === 0 ? (
@@ -118,6 +134,27 @@ const TicketHistory = ({ onBack }) => {
                         >
                           {getStatusText(ticket.statut)}
                         </span>
+                        <div className="flex space-x-2">
+                          {ticket.statut === "confirmed" && (
+                            <button
+                              onClick={() => downloadTicket(ticket)}
+                              disabled={generatingPDF === ticket.id}
+                              className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-blue-300 disabled:cursor-not-allowed flex items-center justify-center"
+                              title="Télécharger PDF"
+                            >
+                              {generatingPDF === ticket.id ? (
+                                <RefreshCw size={16} className="animate-spin" />
+                              ) : (
+                                <>
+                                  <Download size={16} />
+                                  <span className="ml-1 text-sm sm:text-lg">
+                                    Télécharger
+                                  </span>
+                                </>
+                              )}
+                            </button>
+                          )}
+                        </div>
                       </div>
 
                       <p className="font-mono text-sm text-gray-600 mb-1">
@@ -127,6 +164,11 @@ const TicketHistory = ({ onBack }) => {
                         {ticket.nombreBillets} billet(s) -{" "}
                         {ticket.prixTotal?.toLocaleString()} FCFA
                       </p>
+                      {ticket.event_nom ? (
+                        <p className="text-sm text-gray-600">
+                          {ticket.event_nom}
+                        </p>
+                      ) : null}
                       <p className="text-sm text-gray-600">
                         Paiement: {ticket.typePaiement}
                         {ticket.codePromo && ` • Code: ${ticket.codePromo}`}
@@ -135,23 +177,6 @@ const TicketHistory = ({ onBack }) => {
                         Créé le:{" "}
                         {new Date(ticket.dateCreation).toLocaleString("fr-FR")}
                       </p>
-                    </div>
-
-                    <div className="flex space-x-2">
-                      {ticket.statut === "confirmed" && (
-                        <button
-                          onClick={() => downloadTicket(ticket)}
-                          disabled={generatingPDF === ticket.id}
-                          className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-blue-300 disabled:cursor-not-allowed flex items-center justify-center"
-                          title="Télécharger PDF"
-                        >
-                          {generatingPDF === ticket.id ? (
-                            <RefreshCw size={16} className="animate-spin" />
-                          ) : (
-                            <Download size={16} />
-                          )}
-                        </button>
-                      )}
                     </div>
                   </div>
                 </div>

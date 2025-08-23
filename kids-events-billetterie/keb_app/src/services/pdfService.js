@@ -72,11 +72,13 @@ export const pdfService = {
         margin + 14,
         yPosition
       );
-      yPosition += 8;
+      yPosition += 4;
 
       // Détails du ticket - Zone avec fond gris
-      doc.setFillColor(lightGray);
-      doc.rect(margin, yPosition, 70, 25, "F");
+      doc.setFillColor("#e0f3f1");
+      ticketData.codePromo
+        ? doc.rect(margin, yPosition, 70, 30, "F")
+        : doc.rect(margin, yPosition, 70, 25, "F");
 
       doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
@@ -113,6 +115,7 @@ export const pdfService = {
         doc.setFont("helvetica", "bold");
         doc.text("Code promo: ", margin + 2, yPosition + 27);
         doc.setFont("helvetica", "normal");
+        doc.setTextColor("#1905f1");
         doc.text(ticketData.codePromo, margin + 25, yPosition + 27);
       }
 
@@ -123,6 +126,13 @@ export const pdfService = {
       doc.setFont("helvetica", "bold");
       doc.setTextColor(secondaryColor);
       doc.text("SCANNEZ À L'ENTRÉE", 40, yPosition, { align: "center" });
+      yPosition += 5;
+
+      // Zone Event
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor("#1905f1");
+      doc.text(ticketData.event_nom, 40, yPosition, { align: "center" });
       yPosition += 5;
 
       // Cadre autour du QR code

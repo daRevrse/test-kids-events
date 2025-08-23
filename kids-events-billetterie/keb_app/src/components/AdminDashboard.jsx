@@ -12,10 +12,11 @@ import {
   WifiOff,
   Ticket,
 } from "lucide-react";
-
+import { useNavigate } from "react-router-dom";
 import { adminService, ticketService } from "../services/api";
+import { useConnectivity } from "../contexts/ConnectivityContext";
 
-const AdminDashboard = ({ onBack, isOnline = true, apiWorking = true }) => {
+const AdminDashboard = () => {
   const [stats, setStats] = useState({
     totalTickets: { count: 0 },
     pendingTickets: { count: 0 },
@@ -28,21 +29,25 @@ const AdminDashboard = ({ onBack, isOnline = true, apiWorking = true }) => {
   const [error, setError] = useState("");
   const [scannedTicket, setScannedTicket] = useState("");
   const [verificationResult, setVerificationResult] = useState(null);
+  const { isOnline, apiWorking } = useConnectivity();
+
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem("adminAuthenticated");
+    navigate("/home");
+  };
 
   useEffect(() => {
     const isAuthenticated =
       localStorage.getItem("adminAuthenticated") === "true";
     if (!isAuthenticated) {
       // Rediriger vers la page de login ou accueil
-      if (onBack) onBack();
+      // if (onBack) onBack();
+      navigate("/home");
       return;
     }
-  }, [onBack]);
-
-  const handleLogout = () => {
-    localStorage.removeItem("adminAuthenticated");
-    if (onBack) onBack();
-  };
+  }, []);
 
   // Charger les statistiques
   const loadStats = async () => {
@@ -295,12 +300,7 @@ const AdminDashboard = ({ onBack, isOnline = true, apiWorking = true }) => {
                 <RefreshCw size={16} />
                 <span>Actualiser</span>
               </button>
-              <button
-                onClick={onBack}
-                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-              >
-                Retour Client
-              </button>
+              {/* <button onClick={() => navigate("/")}>Retour Client</button> */}
               <button
                 onClick={handleLogout}
                 className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"

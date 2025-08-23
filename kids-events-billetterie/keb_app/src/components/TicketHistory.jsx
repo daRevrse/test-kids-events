@@ -16,36 +16,48 @@ const TicketHistory = ({ onBack }) => {
   const [generatingPDF, setGeneratingPDF] = useState(null);
   const ticketRefs = useRef({});
 
-  const loadTickets = () => {
-    setTickets([]);
-    const history = localTicketService.getTicketHistory();
-    history.forEach((ticket) => {
-      ticketService.getTicketById(ticket.id).then((response) => {
-        const updatedTicket = { ...response };
-        localTicketService.saveTicketToHistory(updatedTicket);
-      });
-    });
-    const updatedHistory = localTicketService.getTicketHistory();
-    setTickets(
-      updatedHistory.sort(
-        (a, b) => new Date(b.dateCreation) - new Date(a.dateCreation)
-      )
-    );
+  const loadTickets = async () => {
+    setLoading(true);
 
-    setLoading(false);
-    console.log("history", history);
-    console.log("updatedHistory", updatedHistory);
+    try {
+      const history = localTicketService.getTicketHistory();
+
+      // On attend que toutes les requêtes soient finies
+      const updatedTickets = await Promise.all(
+        history.map(async (ticket) => {
+          try {
+            const response = await ticketService.getTicketById(ticket.id);
+            const updatedTicket = { ...response };
+            localTicketService.saveTicketToHistory(updatedTicket);
+            return updatedTicket;
+          } catch (err) {
+            console.error("Erreur mise à jour ticket:", err);
+            return ticket; // au pire on garde l’ancien
+          }
+        })
+      );
+
+      // On trie après avoir tout récupéré
+      const sorted = updatedTickets.sort(
+        (a, b) => new Date(b.dateCreation) - new Date(a.dateCreation)
+      );
+
+      setTickets(sorted);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     loadTickets();
   }, []);
 
-  // Dans TicketHistory.jsx - modifiez la fonction downloadTicket
   const downloadTicket = async (ticket) => {
     setGeneratingPDF(ticket.id);
     try {
       await ticketService.generateTicketPDF(ticket);
+      // Une fois le PDF généré, on recharge la liste
+      // await loadTickets();
     } catch (error) {
       console.error("Erreur génération PDF:", error);
       alert("Erreur lors de la génération du PDF: " + error.message);

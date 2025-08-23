@@ -35,7 +35,7 @@ const AdminDashboard = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("adminAuthenticated");
-    navigate("/home");
+    navigate("/");
   };
 
   useEffect(() => {
@@ -44,7 +44,7 @@ const AdminDashboard = () => {
     if (!isAuthenticated) {
       // Rediriger vers la page de login ou accueil
       // if (onBack) onBack();
-      navigate("/home");
+      navigate("/");
       return;
     }
   }, []);

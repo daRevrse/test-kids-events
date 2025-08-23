@@ -737,7 +737,7 @@ export default function TicketingApp() {
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center">
                     <img
-                      src={`moov.jpg`}
+                      src={`https://kidseventsticket.netlify.app/src/images/moov.jpg`}
                       alt="moov"
                       className="w-full h-full object-cover"
                     />
@@ -756,7 +756,7 @@ export default function TicketingApp() {
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center">
                     <img
-                      src={`togocom.jpg`}
+                      src={`https://kidseventsticket.netlify.app/src/images/togocom.jpg`}
                       alt="Togocom"
                       className="w-full h-full object-cover"
                     />

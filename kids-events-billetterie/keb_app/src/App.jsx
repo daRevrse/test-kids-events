@@ -377,7 +377,9 @@ export default function TicketingApp() {
             transactionId: paymentResult.transactionId,
           });
 
-          setCurrentTicket(ticket);
+          const realTicket = await ticketService.getTicketById(ticket.id);
+
+          setCurrentTicket(realTicket);
           setCurrentView("ticket-generated");
         } else {
           throw new Error(paymentResult.message || "Échec du paiement");
@@ -923,6 +925,12 @@ export default function TicketingApp() {
                     <span>Nombre de billets:</span>
                     <span>{currentTicket.nombreBillets}</span>
                   </div>
+                  {currentTicket.event_nom ? (
+                    <div className="flex justify-between">
+                      <span>Zone:</span>
+                      <span>{currentTicket.event_nom}</span>
+                    </div>
+                  ) : null}
                   <div className="flex justify-between">
                     <span>Prix total:</span>
                     <span className="font-semibold">

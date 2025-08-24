@@ -536,7 +536,7 @@ export default function TicketingApp() {
                 }}
                 className="mb-4 text-sm text-blue-600 underline hover:text-blue-800"
               >
-                ← Changer de type de billet
+                ←
               </button>
 
               {/* Quantité */}

@@ -478,52 +478,68 @@ export default function TicketingApp() {
   // Composant Sélection Billets
   const TicketSelectionView = () => (
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-red-50 p-4">
-      <ConnectivityAlert isOnline={isOnline} apiWorking={apiWorking} />
-
       <div className="max-w-md mx-auto mt-8">
         <div className="bg-white rounded-xl shadow-lg p-6">
           <h2 className="text-xl font-bold mb-6 text-center">
             Sélection des billets
           </h2>
 
-          {/* Sélection du type de billet */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium mb-2">
-              Type de billet
-            </label>
-            <div className="grid grid-cols-1 gap-2">
-              {events.map((event) => (
-                <button
-                  key={event.id}
-                  onClick={() => {
-                    setCurrentEvent(event);
-                    setSelectedTicketType(event.nom);
-                    setSelectedTickets(1);
-                    setError("");
-                  }}
-                  className={`p-3 border-2 rounded-lg text-left transition-colors ${
-                    currentEvent?.id === event.id
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
-                >
-                  <div className="font-semibold">{event.nom}</div>
-                  <div className="text-sm text-gray-600">
-                    {event.prix_unitaire?.toLocaleString()} FCFA
-                  </div>
-                  {event.stock_restant && (
-                    <div className="text-xs text-blue-600">
-                      Disponible: {event.stock_restant}
+          {/* Étape 1 : liste des billets (visible seulement si pas encore choisi) */}
+          {!selectedTicketType && (
+            <div className="mb-6">
+              <label className="block text-sm font-medium mb-2">
+                Type de billet
+              </label>
+              <div className="grid grid-cols-1 gap-2">
+                {events.map((event) => (
+                  <button
+                    key={event.id}
+                    onClick={() => {
+                      setCurrentEvent(event);
+                      setSelectedTicketType(event.nom);
+                      setSelectedTickets(1);
+                      setError("");
+                    }}
+                    className={`p-3 border-2 rounded-lg text-left transition-colors ${
+                      currentEvent?.id === event.id
+                        ? "border-blue-500 bg-blue-50"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="font-semibold">{event.nom}</div>
+                    <div className="text-sm text-gray-600">
+                      {event.prix_unitaire?.toLocaleString()} FCFA
                     </div>
-                  )}
-                </button>
-              ))}
+                    {event.stock_restant && (
+                      <div className="text-xs text-blue-600">
+                        Disponible: {event.stock_restant}
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
+          {/* Étape 2 : suite (visible seulement si billet sélectionné) */}
           {selectedTicketType && (
             <>
-              {/* Reste du code existant pour la quantité et code promo */}
+              {/* Bouton retour à la liste */}
+              <button
+                onClick={() => {
+                  setSelectedTicketType("");
+                  setCurrentEvent("ticket-selection");
+                  setSelectedTickets(1);
+                  setPromoCode("");
+                  setPromoDiscount(0);
+                  setError("");
+                }}
+                className="mb-4 text-sm text-blue-600 underline hover:text-blue-800"
+              >
+                ← Changer de type de billet
+              </button>
+
+              {/* Quantité */}
               <div className="mb-6">
                 <label className="block text-sm font-medium mb-2">
                   Quantité
@@ -561,6 +577,7 @@ export default function TicketingApp() {
                 </div>
               </div>
 
+              {/* Code promo */}
               <div className="mb-6">
                 <label className="block text-sm font-medium mb-2">
                   Code de réduction (optionnel)
@@ -590,8 +607,10 @@ export default function TicketingApp() {
                     ✅ Réduction de {promoDiscount}% appliquée
                   </p>
                 )}
+                {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
               </div>
 
+              {/* Résumé prix */}
               <div className="bg-gray-50 p-4 rounded-lg mb-6">
                 <div className="flex justify-between mb-2">
                   <span>Prix unitaire:</span>
@@ -626,8 +645,9 @@ export default function TicketingApp() {
                 </div>
               </div>
 
+              {/* Bouton continuer */}
               <button
-                onClick={() => setCurrentView("payment-selection")}
+                onClick={() => console.log("Aller au paiement")}
                 className="w-full bg-green-500 text-white py-3 rounded-lg font-semibold hover:bg-green-600 transition-colors"
               >
                 Continuer vers le paiement

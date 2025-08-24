@@ -1,0 +1,33 @@
+{
+  "name": "kids-events-backend",
+  "version": "1.0.0",
+  "description": "Backend API for Kids Events ticketing system",
+  "main": "netlify/functions/api.js",
+  "scripts": {
+    "build": "echo 'Build completed'",
+    "dev": "netlify dev",
+    "test": "echo 'No tests specified'"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "sqlite3": "^5.1.6",
+    "uuid": "^9.0.1",
+    "qrcode": "^1.5.3",
+    "serverless-http": "^3.2.0"
+  },
+  "devDependencies": {
+    "netlify-cli": "^17.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "ticketing",
+    "events",
+    "api",
+    "serverless"
+  ],
+  "author": "mr_gass",
+  "license": "ISC"
+}

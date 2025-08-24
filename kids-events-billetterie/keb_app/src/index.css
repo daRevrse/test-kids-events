@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    font-family: "Inter", system-ui, sans-serif;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #fef2f2 0%, #f0fdf4 100%);
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-kids-green text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-600 transition-colors duration-200;
+  }
+
+  .btn-secondary {
+    @apply bg-kids-red text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors duration-200;
+  }
+
+  .btn-warning {
+    @apply bg-kids-orange text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-600 transition-colors duration-200;
+  }
+
+  .card {
+    @apply bg-white rounded-xl shadow-lg p-6;
+  }
+
+  .input-field {
+    @apply w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kids-green focus:border-transparent;
+  }
+}
+
+/* Pour l'impression des tickets */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #ticket-pdf-template,
+  #ticket-pdf-template * {
+    visibility: visible;
+  }
+
+  #ticket-pdf-template {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 70mm !important;
+    height: 150mm !important;
+  }
+}
+
+/* Style pour le template PDF */
+.ticket-template {
+  width: 70mm;
+  padding: 10px;
+  font-family: Arial, sans-serif;
+  background: white;
+}
+
+.ticket-header {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.ticket-separator {
+  border: 1px solid #000;
+  margin: 10px 0;
+}
+
+.ticket-info {
+  margin-bottom: 15px;
+  font-size: 10px;
+}
+
+.ticket-details {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.ticket-qr-area {
+  text-align: center;
+  margin: 20px 0;
+}
+
+.ticket-footer {
+  text-align: center;
+  margin-top: 15px;
+  font-size: 8px;
+}

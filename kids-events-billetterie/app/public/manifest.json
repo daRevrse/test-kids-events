@@ -1,0 +1,16 @@
+{
+  "name": "KIDS EVENTS - Village de Noël",
+  "short_name": "KidsEvents",
+  "description": "Billetterie Village de Noël",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#16a34a",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}

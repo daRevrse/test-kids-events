@@ -14,6 +14,7 @@ import {
   AlertTriangle,
   Download,
   RefreshCw,
+  ArrowLeft,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 // Import des services API et composants
@@ -487,6 +488,14 @@ export default function TicketingApp() {
           {/* Étape 1 : liste des billets (visible seulement si pas encore choisi) */}
           {!selectedTicketType && (
             <div className="mb-6">
+              <button
+                onClick={() => {
+                  setCurrentView("qr-scan");
+                }}
+                className="mb-4 text-sm text-blue-600 font-semibold hover:text-blue-800 flex items-center space-x-2"
+              >
+                <ArrowLeft size={16} /> <span>Retour</span>
+              </button>
               <label className="block text-sm font-medium mb-2">
                 Type de billet
               </label>
@@ -534,9 +543,9 @@ export default function TicketingApp() {
                   setPromoDiscount(0);
                   setError("");
                 }}
-                className="mb-4 text-sm text-blue-600 underline hover:text-blue-800"
+                className="mb-4 text-sm text-blue-600 font-semibold hover:text-blue-800 flex items-center space-x-2"
               >
-                ←
+                <ArrowLeft size={16} /> <span>Retour</span>
               </button>
 
               {/* Quantité */}
@@ -647,7 +656,7 @@ export default function TicketingApp() {
 
               {/* Bouton continuer */}
               <button
-                onClick={() => console.log("Aller au paiement")}
+                onClick={() => setCurrentView("payment-selection")}
                 className="w-full bg-green-500 text-white py-3 rounded-lg font-semibold hover:bg-green-600 transition-colors"
               >
                 Continuer vers le paiement
@@ -669,6 +678,15 @@ export default function TicketingApp() {
           <h2 className="text-xl font-bold mb-6 text-center">
             Mode de paiement
           </h2>
+
+          <button
+            onClick={() => {
+              setCurrentView("ticket-selection");
+            }}
+            className="mb-4 text-sm text-blue-600 font-semibold hover:text-blue-800 flex items-center space-x-2"
+          >
+            <ArrowLeft size={16} /> <span>Retour</span>
+          </button>
 
           <div className="space-y-4">
             <button
@@ -735,6 +753,15 @@ export default function TicketingApp() {
       <div className="max-w-md mx-auto mt-8">
         <div className="bg-white rounded-xl shadow-lg p-6">
           <h2 className="text-xl font-bold mb-6 text-center">Mobile Money</h2>
+
+          <button
+            onClick={() => {
+              setCurrentView("payment-selection");
+            }}
+            className="mb-4 text-sm text-blue-600 font-semibold hover:text-blue-800 flex items-center space-x-2"
+          >
+            <ArrowLeft size={16} /> <span>Retour</span>
+          </button>
 
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -819,6 +846,14 @@ export default function TicketingApp() {
         <div className="bg-white rounded-xl shadow-lg p-6 text-center">
           <Banknote size={48} className="mx-auto text-green-600 mb-4" />
           <h2 className="text-xl font-bold mb-4">Paiement en espèces</h2>
+          <button
+            onClick={() => {
+              setCurrentView("payment-selection");
+            }}
+            className="mb-4 text-sm text-blue-600 font-semibold hover:text-blue-800 flex items-center space-x-2"
+          >
+            <ArrowLeft size={16} /> <span>Retour</span>
+          </button>
           <div className="bg-green-50 p-4 rounded-lg mb-6">
             <div className="text-lg font-semibold">Montant à payer:</div>
             <div className="text-2xl font-bold text-green-600">
@@ -857,6 +892,14 @@ export default function TicketingApp() {
         <div className="bg-white rounded-xl shadow-lg p-6 text-center">
           <CreditCard size={48} className="mx-auto text-blue-600 mb-4" />
           <h2 className="text-xl font-bold mb-4">Paiement par carte</h2>
+          <button
+            onClick={() => {
+              setCurrentView("payment-selection");
+            }}
+            className="mb-4 text-sm text-blue-600 font-semibold hover:text-blue-800 flex items-center space-x-2"
+          >
+            <ArrowLeft size={16} /> <span>Retour</span>
+          </button>
           <div className="bg-blue-50 p-4 rounded-lg mb-6">
             <div className="text-lg font-semibold">Montant à payer:</div>
             <div className="text-2xl font-bold text-blue-600">
